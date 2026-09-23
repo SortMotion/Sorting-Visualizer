@@ -11,7 +11,7 @@ interface AlgorithmState {
 }
 
 export const useAlgorithmStore = create<AlgorithmState>((set) => ({
-  algorithmId: "bubbleSort",
+  algorithmId: "bubble",
   arraySize: 0,
   values: [],
   setAlgorithm: (id: string) => set({ algorithmId: id }),
