@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useAlgorithmStore } from "../../store/useAlgorithmStore";
 
 const algorithms = [
     { id: "bubble", name: "Bubble Sort", complexity: "O(n²)" },
@@ -11,7 +12,9 @@ const algorithms = [
 ];
 
 function TopBar() {
-    const [algorithm, setAlgorithm] = useState("bubble");
+    const algorithm = useAlgorithmStore((state) => state.algorithmId);
+    const setAlgorithm = useAlgorithmStore((state) => state.setAlgorithm);
+
     const [open, setOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -56,11 +59,11 @@ function TopBar() {
 
                         <div className="absolute inset-0 bg-cyan-400/10 opacity-0 blur-xl transition duration-500 group-hover:opacity-100" />
 
-                        <div className="relative flex h-5 items-end gap-[2px]">
-                            <span className="h-2 w-[3px] rounded-sm bg-cyan-400 transition-all duration-300 group-hover:h-3" />
-                            <span className="h-4 w-[3px] rounded-sm bg-cyan-400 transition-all duration-300 group-hover:h-2" />
-                            <span className="h-3 w-[3px] rounded-sm bg-cyan-400 transition-all duration-300 group-hover:h-5" />
-                            <span className="h-5 w-[3px] rounded-sm bg-cyan-400 transition-all duration-300 group-hover:h-3" />
+                        <div className="relative flex h-5 items-end gap-0.5]">
+                            <span className="h-2 w-0.75 rounded-sm bg-cyan-400 transition-all duration-300 group-hover:h-3" />
+                            <span className="h-4 w-0.75 rounded-sm bg-cyan-400 transition-all duration-300 group-hover:h-2" />
+                            <span className="h-3 w-0.75 rounded-sm bg-cyan-400 transition-all duration-300 group-hover:h-5" />
+                            <span className="h-5 w-0.75 rounded-sm bg-cyan-400 transition-all duration-300 group-hover:h-3" />
                         </div>
 
                         <div className="absolute -right-5 -top-5 h-10 w-10 rounded-full bg-cyan-400/20 blur-xl" />
@@ -170,9 +173,9 @@ function TopBar() {
 
                             <div className="overflow-hidden rounded-xl border border-slate-700/80 bg-slate-950/95 p-2 shadow-2xl shadow-black/60 backdrop-blur-2xl">
 
-                                <div className="relative mb-2 flex items-center justify-between overflow-hidden rounded-lg border border-cyan-400/10 bg-cyan-400/[0.03] px-3 py-2">
+                                <div className="relative mb-2 flex items-center justify-between overflow-hidden rounded-lg border border-cyan-400/10 bg-cyan-400/3 px-3 py-2">
 
-                                    <div className="absolute left-0 top-0 h-px w-1/3 bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
+                                    <div className="absolute left-0 top-0 h-px w-1/3 bg-linear-to-r from-transparent via-cyan-400/60 to-transparent" />
 
                                     <span className="text-[8px] uppercase tracking-[0.25em] text-slate-500">
                                         Select Algorithm
@@ -208,13 +211,13 @@ function TopBar() {
                                                         : "translate-x-2 opacity-0"
                                                 } ${
                                                     selected
-                                                        ? "bg-cyan-400/[0.08]"
+                                                        ? "bg-cyan-400/8"
                                                         : "hover:bg-slate-800/70"
                                                 }`}
                                             >
 
                                                 <div
-                                                    className={`absolute left-0 top-1/2 h-0 w-[2px] -translate-y-1/2 rounded-full bg-cyan-400 transition-all duration-200 ${
+                                                    className={`absolute left-0 top-1/2 h-0 w-0.5 -translate-y-1/2 rounded-full bg-cyan-400 transition-all duration-200 ${
                                                         selected
                                                             ? "h-5"
                                                             : "group-hover/item:h-3"
@@ -282,7 +285,7 @@ function TopBar() {
             </div>
 
             <div className="absolute bottom-0 left-0 h-px w-full bg-slate-900">
-                <div className="h-px w-1/4 animate-[pulse_3s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-cyan-400/70 to-transparent" />
+                <div className="h-px w-1/4 animate-[pulse_3s_ease-in-out_infinite] bg-linear-to-r from-transparent via-cyan-400/70 to-transparent" />
             </div>
 
         </nav>
