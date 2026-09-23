@@ -21,7 +21,7 @@ function* mergeSortGenerator (array: number[]): Generator<SortStep, void, unknow
 
         const temp: number[] = [];
         let i = left;
-        let j = right;
+        let j = mid + 1;
 
         while (i<= mid && j <= right){
             yield {
@@ -69,11 +69,7 @@ function* mergeSortGenerator (array: number[]): Generator<SortStep, void, unknow
 
     yield* mergeSortRecursive(0, arr.length - 1);
 
-    for (let index = 0; index < arr.length; index++){
-        yield {
-            kind: "done",
-        }
-    }
+        yield { kind: "done"}
 }
 
 export const mergeSort: SortAlgorithm = {
@@ -81,5 +77,3 @@ export const mergeSort: SortAlgorithm = {
     name: "Merge Sort",
     run: mergeSortGenerator,
 };
-
-export default mergeSort;
