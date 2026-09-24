@@ -1,33 +1,33 @@
 import { useEffect, useRef, useState } from "react";
+import { ALGORITHMS } from "../../algorithms";
 import { useAlgorithmStore } from "../../store/useAlgorithmStore";
 
-const algorithms = [
-    { id: "bubble", name: "Bubble Sort", complexity: "O(n²)" },
-    { id: "selection", name: "Selection Sort", complexity: "O(n²)" },
-    { id: "insertion", name: "Insertion Sort", complexity: "O(n²)" },
-    { id: "exchange", name: "Exchange Sort", complexity: "O(n²)" },
-    { id: "gnome", name: "Gnome Sort", complexity: "O(n²)" },
-    { id: "merge", name: "Merge Sort", complexity: "O(n log n)" },
-    { id: "quick", name: "Quick Sort", complexity: "O(n log n)" },
-];
+const FOCUS_RING =
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60";
 
-function AlgorithmDropdown({
-    selectedId,
-    disabledId,
-    onSelect,
-    label = "Algorithm",
-}: {
-    selectedId: string;
+type AlgorithmDropdownProps = {
+    selectedId: string | null;
     disabledId?: string | null;
     onSelect: (id: string) => void;
     label?: string;
-}) {
+};
+
+function AlgorithmDropdown({
+    selectedId,
+    disabledId = null,
+    onSelect,
+    label = "Algorithm",
+}: AlgorithmDropdownProps) {
     const [open, setOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const selectedAlgorithm = algorithms.find((item) => item.id === selectedId);
+    const selectedIndex = ALGORITHMS.findIndex((item) => item.id === selectedId);
+    const selectedAlgorithm = selectedIndex >= 0 ? ALGORITHMS[selectedIndex] : null;
 
+    // Cierra al hacer clic fuera o al presionar Escape (solo mientras está abierto)
     useEffect(() => {
+        if (!open) return;
+
         function handleClickOutside(event: MouseEvent) {
             if (
                 dropdownRef.current &&
@@ -36,18 +36,28 @@ function AlgorithmDropdown({
                 setOpen(false);
             }
         }
+
+        function handleKeyDown(event: KeyboardEvent) {
+            if (event.key === "Escape") setOpen(false);
+        }
+
         document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("keydown", handleKeyDown);
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("keydown", handleKeyDown);
         };
-    }, []);
+    }, [open]);
 
     return (
-        <div ref={dropdownRef} className="relative w-44 sm:w-52">
+        <div ref={dropdownRef} className="relative w-40 sm:w-52">
             <button
                 type="button"
-                onClick={() => setOpen(!open)}
-                className={`group flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left backdrop-blur-xl transition-all duration-300 ${
+                onClick={() => setOpen((prev) => !prev)}
+                aria-haspopup="listbox"
+                aria-expanded={open}
+                aria-label={`${label}: ${selectedAlgorithm?.name ?? "sin seleccionar"}`}
+                className={`group flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left backdrop-blur-xl transition-all duration-300 motion-reduce:transition-none ${FOCUS_RING} ${
                     open
                         ? "border-cyan-400/60 bg-slate-900 shadow-[0_0_25px_rgba(34,211,238,0.08)]"
                         : "border-slate-700/80 bg-slate-900/70 hover:border-cyan-400/40 hover:bg-slate-900"
@@ -61,12 +71,9 @@ function AlgorithmDropdown({
                                 : "border-slate-700 bg-slate-800/80 text-slate-500 group-hover:border-cyan-400/30 group-hover:text-cyan-400"
                         }`}
                     >
-                        {String(
-                            Math.max(
-                                0,
-                                algorithms.findIndex((item) => item.id === selectedId)
-                            ) + 1
-                        ).padStart(2, "0")}
+                        {selectedIndex >= 0
+                            ? String(selectedIndex + 1).padStart(2, "0")
+                            : "--"}
                     </div>
 
                     <div className="min-w-0">
@@ -74,18 +81,19 @@ function AlgorithmDropdown({
                             {label}
                         </p>
                         <p className="truncate text-xs font-medium text-slate-200 transition-colors group-hover:text-white">
-                            {selectedAlgorithm?.name || "Select"}
+                            {selectedAlgorithm?.name ?? "Select"}
                         </p>
                     </div>
                 </div>
 
                 <svg
-                    className={`ml-1 h-3.5 w-3.5 shrink-0 text-cyan-400 transition-transform duration-300 ${
+                    className={`ml-1 h-3.5 w-3.5 shrink-0 text-cyan-400 transition-transform duration-300 motion-reduce:transition-none ${
                         open ? "rotate-180" : ""
                     }`}
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
+                    aria-hidden="true"
                 >
                     <path
                         strokeLinecap="round"
@@ -97,10 +105,10 @@ function AlgorithmDropdown({
             </button>
 
             <div
-                className={`absolute right-0 top-[calc(100%+8px)] z-50 w-full origin-top-right transition-all duration-200 ${
+                className={`absolute right-0 top-[calc(100%+8px)] z-50 w-full min-w-52 origin-top-right transition-all duration-200 motion-reduce:transition-none ${
                     open
                         ? "pointer-events-auto scale-100 opacity-100"
-                        : "pointer-events-none scale-[0.97] opacity-0"
+                        : "pointer-events-none invisible scale-[0.97] opacity-0"
                 }`}
             >
                 <div className="overflow-hidden rounded-xl border border-slate-700/80 bg-slate-950/95 p-2 shadow-2xl shadow-black/60 backdrop-blur-2xl">
@@ -109,12 +117,16 @@ function AlgorithmDropdown({
                             Select Algorithm
                         </span>
                         <span className="font-mono text-[8px] text-cyan-500/70">
-                            {algorithms.length} AVAILABLE
+                            {ALGORITHMS.length} AVAILABLE
                         </span>
                     </div>
 
-                    <div className="space-y-1">
-                        {algorithms.map((item, index) => {
+                    <div
+                        role="listbox"
+                        aria-label={label}
+                        className="max-h-80 space-y-1 overflow-y-auto"
+                    >
+                        {ALGORITHMS.map((item, index) => {
                             const selected = item.id === selectedId;
                             const isDisabled = item.id === disabledId;
 
@@ -122,19 +134,22 @@ function AlgorithmDropdown({
                                 <button
                                     key={item.id}
                                     type="button"
+                                    role="option"
+                                    aria-selected={selected}
+                                    aria-disabled={isDisabled}
                                     disabled={isDisabled}
+                                    tabIndex={open ? 0 : -1}
                                     onClick={() => {
-                                        if (!isDisabled) {
-                                            onSelect(item.id);
-                                            setOpen(false);
-                                        }
+                                        if (isDisabled) return;
+                                        onSelect(item.id);
+                                        setOpen(false);
                                     }}
-                                    className={`group/item relative flex w-full items-center gap-2.5 overflow-hidden rounded-lg px-2.5 py-2 text-left transition-all duration-200 ${
+                                    className={`group/item relative flex w-full items-center gap-2.5 overflow-hidden rounded-lg px-2.5 py-2 text-left transition-all duration-200 motion-reduce:transition-none ${FOCUS_RING} ${
                                         isDisabled
-                                            ? "cursor-not-allowed opacity-30 bg-slate-900/40"
+                                            ? "cursor-not-allowed bg-slate-900/40 opacity-30"
                                             : selected
                                             ? "bg-cyan-400/10 text-cyan-300"
-                                            : "hover:bg-slate-800/70 text-slate-300"
+                                            : "text-slate-300 hover:bg-slate-800/70"
                                     }`}
                                 >
                                     <span
@@ -157,14 +172,14 @@ function AlgorithmDropdown({
                                     </div>
 
                                     {isDisabled && (
-                                        <span className="text-[8px] uppercase font-mono text-slate-600">
-                                            Active
+                                        <span className="font-mono text-[8px] uppercase text-slate-600">
+                                            In use
                                         </span>
                                     )}
 
                                     {selected && (
                                         <span className="relative flex h-1.5 w-1.5">
-                                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-40" />
+                                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-40 motion-reduce:animate-none" />
                                             <span className="relative h-1.5 w-1.5 rounded-full bg-cyan-400" />
                                         </span>
                                     )}
@@ -190,17 +205,30 @@ function TopBar() {
     const handleToggleCompare = () => {
         toggleCompare();
 
-        // Si activamos el modo comparación y aún no hay un algoritmo secundario seleccionado, elegimos uno diferente por defecto
-        if (!isComparing && (!compareAlgorithmId || compareAlgorithmId === algorithmId)) {
-            const alternative = algorithms.find((a) => a.id !== algorithmId);
-            if (alternative) {
-                setCompareAlgorithm(alternative.id);
-            }
+        // Se lee el estado YA actualizado (no el del render anterior) para evitar
+        // un closure desfasado. Al activar el modo comparación sin algoritmo B,
+        // se preselecciona el primero distinto al algoritmo A.
+        const state = useAlgorithmStore.getState();
+        if (
+            state.isComparing &&
+            (!state.compareAlgorithmId || state.compareAlgorithmId === state.algorithmId)
+        ) {
+            const alternative = ALGORITHMS.find((a) => a.id !== state.algorithmId);
+            if (alternative) setCompareAlgorithm(alternative.id);
         }
     };
 
+    // Si A cambia al mismo valor que B, el store deja B en null;
+    // se reasigna un algoritmo B válido para no dejar el modo comparación a medias.
+    useEffect(() => {
+        if (isComparing && !compareAlgorithmId) {
+            const alternative = ALGORITHMS.find((a) => a.id !== algorithmId);
+            if (alternative) setCompareAlgorithm(alternative.id);
+        }
+    }, [isComparing, compareAlgorithmId, algorithmId, setCompareAlgorithm]);
+
     return (
-        <nav className="relative h-20 overflow-visible border-b border-slate-800 bg-slate-950 px-4 text-white sm:px-8">
+        <nav className="relative z-40 min-h-20 overflow-visible border-b border-slate-800 bg-slate-950 px-4 py-3 text-white sm:h-20 sm:px-8 sm:py-0">
             <div
                 className="pointer-events-none absolute inset-0 opacity-[0.035]"
                 style={{
@@ -210,7 +238,7 @@ function TopBar() {
                 }}
             />
 
-            <div className="relative mx-auto flex h-full max-w-7xl items-center justify-between gap-4">
+            <div className="relative mx-auto flex h-full max-w-7xl flex-wrap items-center justify-between gap-3 sm:flex-nowrap sm:gap-4">
                 <div className="flex items-center gap-3 sm:gap-4">
                     <div className="group relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-cyan-400/30 bg-cyan-400/5">
                         <div className="absolute inset-0 bg-cyan-400/10 opacity-0 blur-xl transition duration-500 group-hover:opacity-100" />
@@ -235,18 +263,20 @@ function TopBar() {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3 sm:gap-4">
+                <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-4">
                     <button
                         type="button"
                         onClick={handleToggleCompare}
-                        className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold tracking-wider transition-all duration-300 ${
+                        aria-pressed={isComparing}
+                        title="Comparar algoritmos"
+                        className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold tracking-wider transition-all duration-300 motion-reduce:transition-none ${FOCUS_RING} ${
                             isComparing
                                 ? "border-cyan-400/60 bg-cyan-400/15 text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.15)]"
                                 : "border-slate-800 bg-slate-900/80 text-slate-400 hover:border-slate-700 hover:text-slate-200"
                         }`}
                     >
                         <span className="font-mono text-[10px]">VS</span>
-                        <span>DUAL MODE</span>
+                        <span className="hidden sm:inline">DUAL MODE</span>
                         <span
                             className={`h-2 w-2 rounded-full transition-all ${
                                 isComparing ? "bg-cyan-400 shadow-sm shadow-cyan-400" : "bg-slate-700"
@@ -263,7 +293,7 @@ function TopBar() {
 
                     {isComparing && (
                         <AlgorithmDropdown
-                            selectedId={compareAlgorithmId || ""}
+                            selectedId={compareAlgorithmId}
                             disabledId={algorithmId}
                             onSelect={setCompareAlgorithm}
                             label="Algo B"
@@ -273,7 +303,7 @@ function TopBar() {
             </div>
 
             <div className="absolute bottom-0 left-0 h-px w-full bg-slate-900">
-                <div className="h-px w-1/4 animate-[pulse_3s_ease-in-out_infinite] bg-linear-to-r from-transparent via-cyan-400/70 to-transparent" />
+                <div className="h-px w-1/4 animate-[pulse_3s_ease-in-out_infinite] bg-linear-to-r from-transparent via-cyan-400/70 to-transparent motion-reduce:animate-none" />
             </div>
         </nav>
     );
