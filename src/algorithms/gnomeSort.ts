@@ -29,5 +29,6 @@ function* gnomeSortSteps(arr: number[]): Generator<SortStep> {
 export const gnomeSort: SortAlgorithm = {
     id: "gnome",
     name: "Gnome Sort",
+    complexity: "O(n²)",
     run: gnomeSortSteps,
 };
