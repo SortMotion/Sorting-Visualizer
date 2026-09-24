@@ -7,8 +7,10 @@ export type SortStep =
   | { kind: "merge-range"; range: [number, number] }
   | { kind: "done" };
 
+
 export type SortAlgorithm = {
   id: string;
   name: string;
+  complexity: string;
   run: (input: number[]) => Generator<SortStep, void, void>;
 };
