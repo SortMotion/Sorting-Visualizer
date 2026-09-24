@@ -1,51 +1,19 @@
 import { useMemo } from "react";
 import type { SortAlgorithm, SortStep } from "../../algorithms/types";
 import { usePlaybackStore } from "../../store/usePlaybackStore";
+import { buildCumulativeCounts } from "../../utils/stepMetrics";
 
 export type Lane = "primary" | "secondary";
 
 type MetricsOverlayProps = {
+    /** Pasos del carril que dibuja el SortCanvas padre (los mismos que recibe por props). */
     steps: SortStep[];
+    /** Algoritmo del carril; de aquí sale el nombre y la complejidad teórica. */
     algorithm: SortAlgorithm | undefined;
+    /** Carril del que se lee el tiempo de ejecución en usePlaybackStore.executionTimes. */
     lane?: Lane;
     className?: string;
 };
-
-type CumulativeCounts = {
-    compares: Uint32Array;
-    swaps: Uint32Array;
-    writes: Uint32Array;
-};
-
-export function buildCumulativeCounts(steps: SortStep[]): CumulativeCounts {
-    const n = steps.length;
-    const compares = new Uint32Array(n);
-    const swaps = new Uint32Array(n);
-    const writes = new Uint32Array(n);
-
-    let c = 0;
-    let s = 0;
-    let w = 0;
-
-    for (let i = 0; i < n; i++) {
-        switch (steps[i].kind) {
-            case "compare":
-                c++;
-                break;
-            case "swap":
-                s++;
-                break;
-            case "set":
-                w++;
-                break;
-        }
-        compares[i] = c;
-        swaps[i] = s;
-        writes[i] = w;
-    }
-
-    return { compares, swaps, writes };
-}
 
 const numberFormat = new Intl.NumberFormat("en-US");
 
@@ -53,6 +21,8 @@ function formatCount(n: number): string {
     return numberFormat.format(n);
 }
 
+// performance.now() puede venir redondeado por el navegador (precisión
+// reducida por seguridad), así que tiempos muy pequeños se muestran como cota.
 function formatTime(ms: number | null): string {
     if (ms === null) return "—";
     if (ms < 0.01) return "<0.01 ms";
@@ -92,11 +62,15 @@ function MetricsOverlay({
     const currentStepIndex = usePlaybackStore((state) => state.currentStepIndex);
     const executionTime = usePlaybackStore((state) => state.executionTimes[lane]);
 
+    // Solo se recalcula cuando cambia el arreglo de pasos (nuevo "Sort"),
+    // no en cada avance de currentStepIndex.
     const counts = useMemo(() => buildCumulativeCounts(steps), [steps]);
 
     const total = steps.length;
     const hasSteps = total > 0;
 
+    // Arquitectura.md §4.1: si este carril terminó antes que el otro,
+    // se queda "congelado" en su último paso mientras el otro sigue.
     const visibleIndex = hasSteps ? Math.min(currentStepIndex, total - 1) : -1;
     const isFinished = hasSteps && visibleIndex === total - 1;
 
@@ -104,6 +78,8 @@ function MetricsOverlay({
     const swaps = hasSteps ? counts.swaps[visibleIndex] : 0;
     const writes = hasSteps ? counts.writes[visibleIndex] : 0;
 
+    // Insertion/Merge mueven datos con "set" en lugar de "swap"; sin esta
+    // fila mostrarían 0 intercambios y parecería que no hicieron trabajo.
     const usesWrites = hasSteps && counts.writes[total - 1] > 0;
 
     const progress = hasSteps
