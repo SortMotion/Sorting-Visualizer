@@ -75,5 +75,6 @@ function* mergeSortGenerator (array: number[]): Generator<SortStep, void, unknow
 export const mergeSort: SortAlgorithm = {
     id: "merge",
     name: "Merge Sort",
+    complexity: "O(n log n)",
     run: mergeSortGenerator,
 };
