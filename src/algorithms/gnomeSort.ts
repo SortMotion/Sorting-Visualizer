@@ -32,3 +32,4 @@ export const gnomeSort: SortAlgorithm = {
     complexity: "O(n²)",
     run: gnomeSortSteps,
 };
+
