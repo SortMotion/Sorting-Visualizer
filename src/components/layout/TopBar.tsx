@@ -275,7 +275,6 @@ function TopBar() {
                                 : "border-slate-800 bg-slate-900/80 text-slate-400 hover:border-slate-700 hover:text-slate-200"
                         }`}
                     >
-                        <span className="font-mono text-[10px]">VS</span>
                         <span className="hidden sm:inline">DUAL MODE</span>
                         <span
                             className={`h-2 w-2 rounded-full transition-all ${

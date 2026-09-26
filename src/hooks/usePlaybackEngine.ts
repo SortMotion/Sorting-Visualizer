@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { usePlaybackStore } from '../store/usePlaybackStore';
 
-const INTERVAL_MS = 500;
+export const INTERVAL_MS = 100;
 
 export function usePlaybackEngine() {
   const isPlaying = usePlaybackStore((state) => state.isPlaying);
