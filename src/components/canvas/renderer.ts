@@ -10,12 +10,12 @@ export interface RenderOptions {
 }
 
 const COLORS = {
-    default: "#3B82F6",   
+    default: "#3B82F6",
     compare: "#EF4444",
-    swap: "#10B981",       
-    pivot: "#F59E0B",      
-    sorted: "#10B981",     
-    mergeRange: "#8B5CF6", 
+    swap: "#10B981",
+    pivot: "#F59E0B",
+    sorted: "#10B981",
+    mergeRange: "#8B5CF6",
 };
 
 export function renderCanvas({
