@@ -4,16 +4,6 @@ import { usePlaybackStore } from "../../store/usePlaybackStore";
 import MetricsOverlay, { type Lane } from "./MetricsOverlay";
 import { renderCanvas } from "./renderer";
 
-// ---------------------------------------------------------------------------
-// Reconstrucción del arreglo en un paso dado
-// ---------------------------------------------------------------------------
-// Los SortStep solo "narran" lo que pasó (Arquitectura.md §2): no traen el
-// arreglo completo. Para dibujar el paso `i` hay que aplicar los pasos 0..i
-// sobre los `values` originales. Para que avanzar, retroceder o saltar sea
-// barato incluso con Stooge Sort (cientos de miles de pasos), se guarda una
-// "foto" del estado cada CHECKPOINT_INTERVAL pasos y solo se reaplican los
-// pasos que faltan desde la foto más cercana.
-
 const CHECKPOINT_INTERVAL = 256;
 
 type Checkpoint = {
@@ -35,9 +25,6 @@ function inBounds(index: number, length: number): boolean {
     return Number.isInteger(index) && index >= 0 && index < length;
 }
 
-// Aplica un paso sobre el estado (muta `array` y `sorted`).
-// Los índices fuera de rango se ignoran: puede pasar durante el render en que
-// `values` ya cambió pero BottomControls todavía no descarta los pasos viejos.
 function applyStep(array: number[], sorted: Uint8Array, step: SortStep): void {
     const n = array.length;
 
@@ -58,11 +45,9 @@ function applyStep(array: number[], sorted: Uint8Array, step: SortStep): void {
         case "done":
             sorted.fill(1);
             break;
-        // "compare", "pivot" y "merge-range" solo resaltan; no cambian el estado.
     }
 }
 
-// Checkpoint `c` = estado DESPUÉS de aplicar el paso `c * CHECKPOINT_INTERVAL`.
 function buildTimeline(values: number[], steps: SortStep[]): Timeline {
     const array = [...values];
     const sorted = new Uint8Array(values.length);
@@ -88,8 +73,6 @@ function getFrame(
         return { array: values, sorted: new Set(), step: null };
     }
 
-    // Arquitectura.md §4.1: si este carril ya terminó, se queda congelado en
-    // su último paso mientras el otro carril sigue avanzando.
     const index = Math.min(Math.max(stepIndex, 0), steps.length - 1);
 
     const checkpointIndex = Math.floor(index / CHECKPOINT_INTERVAL);
@@ -100,9 +83,6 @@ function getFrame(
     for (let i = checkpointIndex * CHECKPOINT_INTERVAL + 1; i <= index; i++) {
         applyStep(array, sortedFlags, steps[i]);
     }
-
-    // Set nuevo en cada frame: renderCanvas agrega índices a `sortedIndices`,
-    // así que no se comparte entre frames.
     const sorted = new Set<number>();
     sortedFlags.forEach((flag, i) => {
         if (flag) sorted.add(i);
@@ -111,10 +91,6 @@ function getFrame(
     return { array, sorted, step: steps[index] };
 }
 
-// ---------------------------------------------------------------------------
-// Componente
-// ---------------------------------------------------------------------------
-
 type CanvasSize = {
     width: number;
     height: number;
@@ -122,13 +98,9 @@ type CanvasSize = {
 };
 
 export type SortCanvasProps = {
-    /** Pasos de este carril (`steps.primary` o `steps.secondary`). */
     steps: SortStep[];
-    /** Arreglo original sobre el que se generaron los pasos. */
     values: number[];
-    /** Algoritmo de este carril (nombre y complejidad para el overlay). */
     algorithm: SortAlgorithm | undefined;
-    /** Carril: define qué `executionTimes[lane]` lee MetricsOverlay. */
     lane?: Lane;
     className?: string;
 };
@@ -146,7 +118,6 @@ function SortCanvas({
 
     const currentStepIndex = usePlaybackStore((state) => state.currentStepIndex);
 
-    // Se recalcula solo cuando llegan pasos nuevos o cambian los datos.
     const timeline = useMemo(() => buildTimeline(values, steps), [values, steps]);
 
     const frame = useMemo(
@@ -154,8 +125,6 @@ function SortCanvas({
         [timeline, values, steps, currentStepIndex]
     );
 
-    // Observa el tamaño del contenedor (el callback inicial de ResizeObserver
-    // da la primera medida, así que no hace falta medir a mano en el efecto).
     useEffect(() => {
         const container = containerRef.current;
         if (!container) return;
@@ -179,13 +148,10 @@ function SortCanvas({
         return () => observer.disconnect();
     }, []);
 
-    // Dibuja cada vez que cambia el frame o las dimensiones.
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas || size.width === 0 || size.height === 0) return;
 
-        // Resolución física = tamaño CSS × devicePixelRatio, para que las
-        // barras no se vean borrosas en pantallas HiDPI.
         const pixelWidth = Math.round(size.width * size.dpr);
         const pixelHeight = Math.round(size.height * size.dpr);
         if (canvas.width !== pixelWidth) canvas.width = pixelWidth;
@@ -194,7 +160,6 @@ function SortCanvas({
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
 
-        // El renderer trabaja en px CSS; la escala se encarga del resto.
         ctx.setTransform(size.dpr, 0, 0, size.dpr, 0, 0);
 
         renderCanvas({
