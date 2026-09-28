@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { SortAlgorithm, SortStep } from "../../algorithms/types";
 import { usePlaybackStore } from "../../store/usePlaybackStore";
 import { buildCumulativeCounts } from "../../utils/stepMetrics";
@@ -54,6 +54,8 @@ function MetricsOverlay({
     lane = "primary",
     className = "",
 }: MetricsOverlayProps) {
+    const [isExpanded, setIsExpanded] = useState(true);
+
     const currentStepIndex = usePlaybackStore((state) => state.currentStepIndex);
     const executionTime = usePlaybackStore((state) => state.executionTimes[lane]);
 
@@ -92,9 +94,15 @@ function MetricsOverlay({
     return (
         <aside
             aria-label={`Metrics for ${name}`}
-            className={`pointer-events-none absolute right-3 top-3 z-10 w-52 max-w-[calc(100%-1.5rem)] select-none overflow-hidden rounded-xl border border-[#363a4f]/60 bg-[#1e2030]/55 text-[#cad3f5] shadow-[0_8px_32px_rgba(24,24,37,0.45)] backdrop-blur-md ${className}`}
+            className={`pointer-events-none absolute right-3 top-3 z-10 w-52 max-w-[calc(100%-1.5rem)] select-none overflow-hidden rounded-xl border border-[#363a4f]/60 bg-[#1e2030]/55 text-[#cad3f5] shadow-[0_8px_32px_rgba(24,24,37,0.45)] backdrop-blur-md transition-all duration-300 ${className}`}
         >
-            <div className="flex items-center justify-between gap-2 border-b border-[#363a4f]/50 px-3 py-2">
+            <button
+                type="button"
+                onClick={() => setIsExpanded((prev) => !prev)}
+                className="pointer-events-auto flex w-full cursor-pointer items-center justify-between gap-2 border-b border-[#363a4f]/50 px-3 py-2 transition-colors hover:bg-[#24273a]/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#91d7e3]/60"
+                aria-expanded={isExpanded}
+                title={isExpanded ? "Hide metrics" : "Show metrics"}
+            >
                 <div className="flex min-w-0 items-center gap-2">
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-[#91d7e3]/30 bg-[#91d7e3]/5 font-mono text-[9px] text-[#8bd5ca]">
                         {laneTag}
@@ -109,34 +117,52 @@ function MetricsOverlay({
                     <span className={`text-[8px] uppercase tracking-[0.25em] ${status.text}`}>
                         {status.label}
                     </span>
+                    <svg
+                        className={`ml-1 h-3.5 w-3.5 text-[#5b6078] transition-transform duration-300 ${
+                            isExpanded ? "" : "rotate-180"
+                        }`}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                    </svg>
                 </span>
-            </div>
+            </button>
 
-            <dl className="space-y-1.5 px-3 py-2.5">
-                <Metric
-                    label="Complexity"
-                    value={algorithm?.complexity ?? "—"}
-                    highlight
-                />
-                <Metric
-                    label="Steps"
-                    value={
-                        hasSteps
-                            ? `${formatCount(visibleIndex + 1)} / ${formatCount(total)}`
-                            : "—"
-                    }
-                />
-                <Metric
-                    label="Comparisons"
-                    value={hasSteps ? formatCount(comparisons) : "—"}
-                />
-                <Metric
-                    label="Swaps"
-                    value={hasSteps ? formatCount(swaps) : "—"}
-                />
-                {usesWrites && <Metric label="Writes" value={formatCount(writes)} />}
-                <Metric label="Time" value={formatTime(executionTime)} />
-            </dl>
+            <div
+                className={`grid transition-all duration-300 ease-in-out ${
+                    isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                }`}
+            >
+                <div className="overflow-hidden">
+                    <dl className="space-y-1.5 px-3 py-2.5">
+                        <Metric
+                            label="Complexity"
+                            value={algorithm?.complexity ?? "—"}
+                            highlight
+                        />
+                        <Metric
+                            label="Steps"
+                            value={
+                                hasSteps
+                                    ? `${formatCount(visibleIndex + 1)} / ${formatCount(total)}`
+                                    : "—"
+                            }
+                        />
+                        <Metric
+                            label="Comparisons"
+                            value={hasSteps ? formatCount(comparisons) : "—"}
+                        />
+                        <Metric
+                            label="Swaps"
+                            value={hasSteps ? formatCount(swaps) : "—"}
+                        />
+                        {usesWrites && <Metric label="Writes" value={formatCount(writes)} />}
+                        <Metric label="Time" value={formatTime(executionTime)} />
+                    </dl>
+                </div>
+            </div>
 
             <div className="h-0.5 w-full bg-[#24273a]/80">
                 <div
