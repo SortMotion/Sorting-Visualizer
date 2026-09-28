@@ -1,19 +1,5 @@
 import type { SortStep } from "../../algorithms/types";
 
-// ---------------------------------------------------------------------------
-// Modelo de animación
-// ---------------------------------------------------------------------------
-// SortCanvas reconstruye el arreglo en cualquier paso (frames discretos); este
-// módulo convierte esos frames en movimiento continuo. Cada elemento tiene una
-// identidad (id) que viaja con él en los swaps, así que cuando dos barras se
-// intercambian se anima su desplazamiento real en lugar de solo repintarlas.
-//
-// Todo aquí es lógica pura (sin React ni DOM):
-//   - syncScene():   se llama cuando cambia el paso → fija los nuevos destinos.
-//   - advanceScene(): se llama en cada requestAnimationFrame → suaviza colores
-//                     y avisa si todavía hay algo moviéndose.
-//   - renderer.ts:   dibuja la escena en el instante `now`.
-
 export type RGB = readonly [number, number, number];
 type MutableRGB = [number, number, number];
 
@@ -23,17 +9,17 @@ function hex(value: string): RGB {
 }
 
 export const PALETTE = {
-    low: hex("#6366F1"), // valores bajos (índigo)
-    high: hex("#22D3EE"), // valores altos (cian)
-    compare: hex("#FB7185"),
-    swap: hex("#FBBF24"),
-    pivot: hex("#F97316"),
-    sorted: hex("#34D399"),
-    range: hex("#A78BFA"),
+    low: hex("#7dc4e4"),
+    high: hex("#91d7e3"),
+    compare: hex("#ed8796"),
+    swap: hex("#eed49f"),
+    pivot: hex("#c6a0f6"),
+    sorted: hex("#a6da95"),
+    range: hex("#f5bde6"),
 } as const;
 
-export const WHITE: RGB = [255, 255, 255];
-export const NIGHT: RGB = [2, 6, 23];
+export const WHITE: RGB = [202, 211, 245];
+export const NIGHT: RGB = [24, 24, 37];
 
 export function mix(a: RGB, b: RGB, t: number): MutableRGB {
     return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
@@ -45,16 +31,9 @@ export function clamp(value: number, min: number, max: number): number {
 
 export const clamp01 = (t: number) => clamp(t, 0, 1);
 
-// ---------------------------------------------------------------------------
-// Easing + tweens
-// ---------------------------------------------------------------------------
-
 export type Ease = (t: number) => number;
+export const easeInOutCubic: Ease = (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
-export const easeInOutCubic: Ease = (t) =>
-    t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-
-// Pequeño rebote al final: las barras "aterrizan" con un poco de inercia.
 export const easeOutBack: Ease = (t) => {
     const c1 = 1.5;
     const c3 = c1 + 1;
@@ -79,7 +58,6 @@ export function sample(tw: Tween, now: number): number {
     return sampleAt(tw, tweenProgress(tw, now));
 }
 
-/** Cambia el destino partiendo del valor actual (sin saltos). */
 export function retarget(tw: Tween, to: number, now: number, dur: number): boolean {
     if (tw.to === to) return false;
     tw.from = sample(tw, now);
@@ -95,10 +73,6 @@ function snap(tw: Tween, value: number): void {
     tw.dur = 0;
 }
 
-// ---------------------------------------------------------------------------
-// Escena
-// ---------------------------------------------------------------------------
-
 export const BURST_LIFE_MS = 700;
 export const CARET_POP_MS = 220;
 export const WAVE_MS = 380;
@@ -107,7 +81,6 @@ const ALPHA_MS = 220;
 const MAX_BURSTS = 48;
 const MAX_BURST_BARS = 160;
 
-/** Retraso entre barras en la ola final (ms por posición). */
 export function waveStagger(n: number): number {
     return Math.min(16, 900 / Math.max(n, 1));
 }
@@ -115,21 +88,20 @@ export function waveStagger(n: number): number {
 export type Bar = {
     id: number;
     value: number;
-    slot: Tween; // posición horizontal (en unidades de "casilla")
-    height: Tween; // valor animado
-    hop: number; // amplitud relativa del salto del movimiento actual (0..1)
-    color: MutableRGB; // color mostrado (se suaviza hacia `target`)
+    slot: Tween;
+    height: Tween;
+    hop: number;
+    color: MutableRGB;
     target: MutableRGB;
     glow: number;
     glowTarget: number;
-    flash: number; // destello blanco que decae
+    flash: number;
     sorted: boolean;
 };
 
-/** Ráfaga de partículas; se dibuja de forma determinista a partir de `seed`. */
 export type Burst = {
-    x: number; // centro en unidades de casilla
-    value: number; // altura de origen en unidades de valor
+    x: number;
+    value: number;
     t0: number;
     color: RGB;
     count: number;
@@ -180,7 +152,6 @@ export type SceneFrame = {
 export type SyncOptions = {
     now: number;
     duration: number;
-    /** Salto de varios pasos, datos nuevos o pasos nuevos: sin saltos ni partículas. */
     jump: boolean;
     reducedMotion: boolean;
 };
@@ -216,7 +187,6 @@ export function syncScene(scene: Scene, frame: SceneFrame, opts: SyncOptions): v
         scene.stepT0 = now;
     }
 
-    // --- Pivote y rango de merge: persisten hasta que otro paso los reemplaza ---
     if (jump) {
         retarget(scene.pivot.alpha, 0, now, alphaDur);
         retarget(scene.range.alpha, 0, now, alphaDur);
@@ -248,7 +218,6 @@ export function syncScene(scene: Scene, frame: SceneFrame, opts: SyncOptions): v
         scene.celebrateAt = null;
     }
 
-    // --- Barras resaltadas por el paso actual ---
     const active = new Map<number, ActiveRole>();
     if (step) {
         switch (step.kind) {
@@ -280,7 +249,6 @@ export function syncScene(scene: Scene, frame: SceneFrame, opts: SyncOptions): v
 
         let bar = scene.bars.get(id);
         if (!bar) {
-            // Barra nueva: nace en su casilla y crece desde 0.
             bar = {
                 id,
                 value,
@@ -300,11 +268,7 @@ export function syncScene(scene: Scene, frame: SceneFrame, opts: SyncOptions): v
         const fromSlot = bar.slot.to;
         if (retarget(bar.slot, slot, now, dur)) {
             const distance = Math.abs(slot - fromSlot);
-            // La que avanza a la derecha salta por encima de la otra.
-            bar.hop =
-                jump || reducedMotion
-                    ? 0
-                    : (slot > fromSlot ? 1 : 0.35) * Math.min(1, 0.45 + distance * 0.06);
+            bar.hop = jump || reducedMotion ? 0 : (slot > fromSlot ? 1 : 0.35) * Math.min(1, 0.45 + distance * 0.06);
         }
         retarget(bar.height, value, now, dur);
         bar.value = value;
@@ -341,7 +305,6 @@ export function syncScene(scene: Scene, frame: SceneFrame, opts: SyncOptions): v
         if (!seen.has(id)) scene.bars.delete(id);
     }
 
-    // --- Partículas ---
     if (stepChanged && step && !jump && !reducedMotion && n <= MAX_BURST_BARS) {
         if (step.kind === "swap") {
             const [i, j] = step.indices;
@@ -356,7 +319,6 @@ export function syncScene(scene: Scene, frame: SceneFrame, opts: SyncOptions): v
     }
 }
 
-/** Avanza lo que no depende de tweens (colores, brillo, destellos). Devuelve si sigue habiendo movimiento. */
 export function advanceScene(scene: Scene, now: number): boolean {
     const dt = Math.max(0, now - scene.lastTime);
     scene.lastTime = now;

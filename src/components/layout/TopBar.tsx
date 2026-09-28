@@ -3,7 +3,7 @@ import { ALGORITHMS } from "../../algorithms";
 import { useAlgorithmStore } from "../../store/useAlgorithmStore";
 
 const FOCUS_RING =
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60";
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#91d7e3]/60";
 
 type AlgorithmDropdownProps = {
     selectedId: string | null;
@@ -24,7 +24,6 @@ function AlgorithmDropdown({
     const selectedIndex = ALGORITHMS.findIndex((item) => item.id === selectedId);
     const selectedAlgorithm = selectedIndex >= 0 ? ALGORITHMS[selectedIndex] : null;
 
-    // Cierra al hacer clic fuera o al presionar Escape (solo mientras está abierto)
     useEffect(() => {
         if (!open) return;
 
@@ -59,16 +58,16 @@ function AlgorithmDropdown({
                 aria-label={`${label}: ${selectedAlgorithm?.name ?? "sin seleccionar"}`}
                 className={`group flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left backdrop-blur-xl transition-all duration-300 motion-reduce:transition-none ${FOCUS_RING} ${
                     open
-                        ? "border-cyan-400/60 bg-slate-900 shadow-[0_0_25px_rgba(34,211,238,0.08)]"
-                        : "border-slate-700/80 bg-slate-900/70 hover:border-cyan-400/40 hover:bg-slate-900"
+                        ? "border-[#91d7e3]/60 bg-[#1e2030] shadow-[0_0_25px_rgba(145,215,227,0.08)]"
+                        : "border-[#363a4f]/80 bg-[#1e2030]/70 hover:border-[#91d7e3]/40 hover:bg-[#1e2030]"
                 }`}
             >
                 <div className="flex min-w-0 items-center gap-2.5">
                     <div
                         className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border font-mono text-[10px] transition-all duration-300 ${
                             open
-                                ? "border-cyan-400/40 bg-cyan-400/10 text-cyan-400"
-                                : "border-slate-700 bg-slate-800/80 text-slate-500 group-hover:border-cyan-400/30 group-hover:text-cyan-400"
+                                ? "border-[#91d7e3]/40 bg-[#91d7e3]/10 text-[#91d7e3]"
+                                : "border-[#363a4f] bg-[#24273a]/80 text-[#5b6078] group-hover:border-[#91d7e3]/30 group-hover:text-[#91d7e3]"
                         }`}
                     >
                         {selectedIndex >= 0
@@ -77,17 +76,17 @@ function AlgorithmDropdown({
                     </div>
 
                     <div className="min-w-0">
-                        <p className="text-[7px] uppercase tracking-[0.2em] text-slate-500">
+                        <p className="text-[7px] uppercase tracking-[0.2em] text-[#5b6078]">
                             {label}
                         </p>
-                        <p className="truncate text-xs font-medium text-slate-200 transition-colors group-hover:text-white">
+                        <p className="truncate text-xs font-medium text-[#cad3f5] transition-colors group-hover:text-[#f4dbd6]">
                             {selectedAlgorithm?.name ?? "Select"}
                         </p>
                     </div>
                 </div>
 
                 <svg
-                    className={`ml-1 h-3.5 w-3.5 shrink-0 text-cyan-400 transition-transform duration-300 motion-reduce:transition-none ${
+                    className={`ml-1 h-3.5 w-3.5 shrink-0 text-[#91d7e3] transition-transform duration-300 motion-reduce:transition-none ${
                         open ? "rotate-180" : ""
                     }`}
                     fill="none"
@@ -111,12 +110,12 @@ function AlgorithmDropdown({
                         : "pointer-events-none invisible scale-[0.97] opacity-0"
                 }`}
             >
-                <div className="overflow-hidden rounded-xl border border-slate-700/80 bg-slate-950/95 p-2 shadow-2xl shadow-black/60 backdrop-blur-2xl">
-                    <div className="relative mb-2 flex items-center justify-between overflow-hidden rounded-lg border border-cyan-400/10 bg-cyan-400/5 px-2.5 py-1.5">
-                        <span className="text-[8px] uppercase tracking-[0.25em] text-slate-500">
+                <div className="overflow-hidden rounded-xl border border-[#363a4f]/80 bg-[#181825]/95 p-2 shadow-2xl shadow-black/60 backdrop-blur-2xl">
+                    <div className="relative mb-2 flex items-center justify-between overflow-hidden rounded-lg border border-[#91d7e3]/10 bg-[#91d7e3]/5 px-2.5 py-1.5">
+                        <span className="text-[8px] uppercase tracking-[0.25em] text-[#5b6078]">
                             Select Algorithm
                         </span>
-                        <span className="font-mono text-[8px] text-cyan-500/70">
+                        <span className="font-mono text-[8px] text-[#7dc4e4]/70">
                             {ALGORITHMS.length} AVAILABLE
                         </span>
                     </div>
@@ -146,17 +145,17 @@ function AlgorithmDropdown({
                                     }}
                                     className={`group/item relative flex w-full items-center gap-2.5 overflow-hidden rounded-lg px-2.5 py-2 text-left transition-all duration-200 motion-reduce:transition-none ${FOCUS_RING} ${
                                         isDisabled
-                                            ? "cursor-not-allowed bg-slate-900/40 opacity-30"
+                                            ? "cursor-not-allowed bg-[#1e2030]/40 opacity-30"
                                             : selected
-                                            ? "bg-cyan-400/10 text-cyan-300"
-                                            : "text-slate-300 hover:bg-slate-800/70"
+                                            ? "bg-[#91d7e3]/10 text-[#8bd5ca]"
+                                            : "text-[#b8c0e0] hover:bg-[#24273a]/70"
                                     }`}
                                 >
                                     <span
                                         className={`w-4 font-mono text-[9px] ${
                                             selected
-                                                ? "text-cyan-400"
-                                                : "text-slate-600 group-hover/item:text-slate-400"
+                                                ? "text-[#91d7e3]"
+                                                : "text-[#494d64] group-hover/item:text-[#8087a2]"
                                         }`}
                                     >
                                         {String(index + 1).padStart(2, "0")}
@@ -166,21 +165,21 @@ function AlgorithmDropdown({
                                         <p className="truncate text-xs font-medium">
                                             {item.name}
                                         </p>
-                                        <p className="font-mono text-[8px] text-slate-600">
+                                        <p className="font-mono text-[8px] text-[#494d64]">
                                             {item.complexity}
                                         </p>
                                     </div>
 
                                     {isDisabled && (
-                                        <span className="font-mono text-[8px] uppercase text-slate-600">
+                                        <span className="font-mono text-[8px] uppercase text-[#494d64]">
                                             In use
                                         </span>
                                     )}
 
                                     {selected && (
                                         <span className="relative flex h-1.5 w-1.5">
-                                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-40 motion-reduce:animate-none" />
-                                            <span className="relative h-1.5 w-1.5 rounded-full bg-cyan-400" />
+                                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#91d7e3] opacity-40 motion-reduce:animate-none" />
+                                            <span className="relative h-1.5 w-1.5 rounded-full bg-[#91d7e3]" />
                                         </span>
                                     )}
                                 </button>
@@ -205,9 +204,6 @@ function TopBar() {
     const handleToggleCompare = () => {
         toggleCompare();
 
-        // Se lee el estado YA actualizado (no el del render anterior) para evitar
-        // un closure desfasado. Al activar el modo comparación sin algoritmo B,
-        // se preselecciona el primero distinto al algoritmo A.
         const state = useAlgorithmStore.getState();
         if (
             state.isComparing &&
@@ -218,8 +214,6 @@ function TopBar() {
         }
     };
 
-    // Si A cambia al mismo valor que B, el store deja B en null;
-    // se reasigna un algoritmo B válido para no dejar el modo comparación a medias.
     useEffect(() => {
         if (isComparing && !compareAlgorithmId) {
             const alternative = ALGORITHMS.find((a) => a.id !== algorithmId);
@@ -228,35 +222,35 @@ function TopBar() {
     }, [isComparing, compareAlgorithmId, algorithmId, setCompareAlgorithm]);
 
     return (
-        <nav className="relative z-40 min-h-20 overflow-visible border-b border-slate-800 bg-slate-950 px-4 py-3 text-white sm:h-20 sm:px-8 sm:py-0">
+        <nav className="relative z-40 min-h-20 overflow-visible border-b border-[#24273a] bg-[#181825] px-4 py-3 text-[#cad3f5] sm:h-20 sm:px-8 sm:py-0">
             <div
                 className="pointer-events-none absolute inset-0 opacity-[0.035]"
                 style={{
                     backgroundImage:
-                        "linear-gradient(#22d3ee 1px, transparent 1px), linear-gradient(90deg, #22d3ee 1px, transparent 1px)",
+                        "linear-gradient(#91d7e3 1px, transparent 1px), linear-gradient(90deg, #91d7e3 1px, transparent 1px)",
                     backgroundSize: "32px 32px",
                 }}
             />
 
             <div className="relative mx-auto flex h-full max-w-7xl flex-wrap items-center justify-between gap-3 sm:flex-nowrap sm:gap-4">
                 <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="group relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-cyan-400/30 bg-cyan-400/5">
-                        <div className="absolute inset-0 bg-cyan-400/10 opacity-0 blur-xl transition duration-500 group-hover:opacity-100" />
+                    <div className="group relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-[#91d7e3]/30 bg-[#91d7e3]/5">
+                        <div className="absolute inset-0 bg-[#91d7e3]/10 opacity-0 blur-xl transition duration-500 group-hover:opacity-100" />
                         <div className="relative flex h-5 items-end gap-0.5">
-                            <span className="h-2 w-0.75 rounded-sm bg-cyan-400 transition-all duration-300 group-hover:h-3" />
-                            <span className="h-4 w-0.75 rounded-sm bg-cyan-400 transition-all duration-300 group-hover:h-2" />
-                            <span className="h-3 w-0.75 rounded-sm bg-cyan-400 transition-all duration-300 group-hover:h-5" />
-                            <span className="h-5 w-0.75 rounded-sm bg-cyan-400 transition-all duration-300 group-hover:h-3" />
+                            <span className="h-2 w-0.75 rounded-sm bg-[#91d7e3] transition-all duration-300 group-hover:h-3" />
+                            <span className="h-4 w-0.75 rounded-sm bg-[#91d7e3] transition-all duration-300 group-hover:h-2" />
+                            <span className="h-3 w-0.75 rounded-sm bg-[#91d7e3] transition-all duration-300 group-hover:h-5" />
+                            <span className="h-5 w-0.75 rounded-sm bg-[#91d7e3] transition-all duration-300 group-hover:h-3" />
                         </div>
                     </div>
 
                     <div>
                         <h1 className="text-base font-bold tracking-[0.18em] sm:text-lg">
-                            SORT<span className="text-cyan-400">MOTION</span>
+                            SORT<span className="text-[#91d7e3]">MOTION</span>
                         </h1>
                         <div className="mt-0.5 flex items-center gap-2">
-                            <span className="h-px w-4 bg-cyan-400/50" />
-                            <p className="text-[8px] uppercase tracking-[0.3em] text-slate-500 sm:text-[9px]">
+                            <span className="h-px w-4 bg-[#91d7e3]/50" />
+                            <p className="text-[8px] uppercase tracking-[0.3em] text-[#5b6078] sm:text-[9px]">
                                 Visualizer
                             </p>
                         </div>
@@ -271,14 +265,14 @@ function TopBar() {
                         title="Comparar algoritmos"
                         className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold tracking-wider transition-all duration-300 motion-reduce:transition-none ${FOCUS_RING} ${
                             isComparing
-                                ? "border-cyan-400/60 bg-cyan-400/15 text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.15)]"
-                                : "border-slate-800 bg-slate-900/80 text-slate-400 hover:border-slate-700 hover:text-slate-200"
+                                ? "border-[#91d7e3]/60 bg-[#91d7e3]/15 text-[#8bd5ca] shadow-[0_0_15px_rgba(145,215,227,0.15)]"
+                                : "border-[#24273a] bg-[#1e2030]/80 text-[#8087a2] hover:border-[#363a4f] hover:text-[#b8c0e0]"
                         }`}
                     >
                         <span className="hidden sm:inline">DUAL MODE</span>
                         <span
                             className={`h-2 w-2 rounded-full transition-all ${
-                                isComparing ? "bg-cyan-400 shadow-sm shadow-cyan-400" : "bg-slate-700"
+                                isComparing ? "bg-[#91d7e3] shadow-sm shadow-[#91d7e3]" : "bg-[#363a4f]"
                             }`}
                         />
                     </button>
@@ -301,8 +295,8 @@ function TopBar() {
                 </div>
             </div>
 
-            <div className="absolute bottom-0 left-0 h-px w-full bg-slate-900">
-                <div className="h-px w-1/4 animate-[pulse_3s_ease-in-out_infinite] bg-linear-to-r from-transparent via-cyan-400/70 to-transparent motion-reduce:animate-none" />
+            <div className="absolute bottom-0 left-0 h-px w-full bg-[#1e2030]">
+                <div className="h-px w-1/4 animate-[pulse_3s_ease-in-out_infinite] bg-linear-to-r from-transparent via-[#91d7e3]/70 to-transparent motion-reduce:animate-none" />
             </div>
         </nav>
     );

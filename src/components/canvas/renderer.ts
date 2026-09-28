@@ -18,9 +18,6 @@ import {
     type Scene,
 } from "./animation";
 
-// Función pura: dibuja la escena tal como se ve en el instante `now`.
-// No guarda estado; todo el estado de la animación vive en `Scene`.
-
 export interface RenderOptions {
     ctx: CanvasRenderingContext2D;
     width: number;
@@ -41,7 +38,7 @@ type Layout = {
 
 type Pose = {
     bar: Bar;
-    p: number; // progreso del movimiento horizontal
+    p: number;
     x: number;
     h: number;
     lift: number;
@@ -49,8 +46,7 @@ type Pose = {
 };
 
 const MONO = "ui-monospace, SFMono-Regular, Menlo, monospace";
-const GRAVITY = 0.00022; // px/ms²
-// [retraso en progreso, opacidad] de las estelas de las barras que se mueven.
+const GRAVITY = 0.00022;
 const GHOSTS: ReadonlyArray<readonly [number, number]> = [
     [0.08, 0.22],
     [0.16, 0.1],
@@ -67,7 +63,7 @@ function rand(seed: number, k: number, salt: number): number {
 
 function computeLayout(width: number, height: number, n: number): Layout {
     const padX = 10;
-    const top = 30; // espacio para los marcadores de comparación
+    const top = 30;
     const base = height - 6;
     const slotW = (width - padX * 2) / Math.max(n, 1);
     const gap = slotW >= 8 ? Math.max(1.5, slotW * 0.16) : slotW >= 3 ? 1 : 0;
@@ -86,7 +82,8 @@ function drawGrid(ctx: CanvasRenderingContext2D, width: number, layout: Layout):
     const { padX, base, chartH } = layout;
 
     ctx.lineWidth = 1;
-    ctx.strokeStyle = "rgba(148,163,184,0.07)";
+    // Macchiato Surface2 (#5b6078)
+    ctx.strokeStyle = "rgba(91,96,120,0.07)";
     ctx.beginPath();
     for (const f of [0.25, 0.5, 0.75, 1]) {
         const y = Math.round(base - chartH * f) + 0.5;
@@ -96,9 +93,9 @@ function drawGrid(ctx: CanvasRenderingContext2D, width: number, layout: Layout):
     ctx.stroke();
 
     const g = ctx.createLinearGradient(padX, 0, width - padX, 0);
-    g.addColorStop(0, "rgba(34,211,238,0)");
-    g.addColorStop(0.5, "rgba(34,211,238,0.35)");
-    g.addColorStop(1, "rgba(34,211,238,0)");
+    g.addColorStop(0, "rgba(145,215,227,0)");
+    g.addColorStop(0.5, "rgba(145,215,227,0.35)");
+    g.addColorStop(1, "rgba(145,215,227,0)");
     ctx.fillStyle = g;
     ctx.fillRect(padX, base, width - padX * 2, 1);
 }
@@ -132,7 +129,6 @@ function drawBar(
         ctx.fillStyle = rgba(color);
     }
 
-    // Esquinas superiores redondeadas cuando la barra es lo bastante ancha.
     const r = w >= 5 ? Math.min(w / 2, 5, h) : 0;
     ctx.beginPath();
     if (r > 0) {
@@ -171,7 +167,6 @@ export function renderScene({ ctx, width, height, scene, now }: RenderOptions): 
     const reduced = scene.reducedMotion;
     const fancy = n <= 200;
 
-    // --- Rango activo de Merge Sort ---
     const rangeAlpha = sample(scene.range.alpha, now);
     if (rangeAlpha > 0.01) {
         const x0 = slotX(sample(scene.range.start, now)) - gap / 2;
@@ -189,7 +184,6 @@ export function renderScene({ ctx, width, height, scene, now }: RenderOptions): 
         ctx.stroke();
     }
 
-    // --- Pose actual de cada barra ---
     const hopMax = Math.min(34, chartH * 0.14);
     const waveHop = Math.min(12, chartH * 0.06);
     const stagger = waveStagger(n);
@@ -202,7 +196,6 @@ export function renderScene({ ctx, width, height, scene, now }: RenderOptions): 
         let lift = bar.hop > 0 && p < 1 ? Math.sin(Math.PI * p) * bar.hop * hopMax : 0;
         let flash = bar.flash;
 
-        // Ola final: recorre el arreglo de izquierda a derecha.
         if (scene.celebrateAt !== null) {
             const local = now - scene.celebrateAt - bar.slot.to * stagger;
             if (local > 0 && local < WAVE_MS) {
@@ -223,7 +216,6 @@ export function renderScene({ ctx, width, height, scene, now }: RenderOptions): 
 
         const target = bar.slot.to;
         if (target >= 0 && target < n) bySlot[target] = pose;
-        // Lo que se mueve o brilla se dibuja encima del resto.
         (p < 1 || bar.glow > 0.05 ? front : back).push(pose);
     }
 
@@ -248,19 +240,18 @@ export function renderScene({ ctx, width, height, scene, now }: RenderOptions): 
         drawPose(pose);
     }
 
-    // --- Valores dentro de las barras (arreglos pequeños) ---
     if (n <= 24 && barW >= 20) {
         ctx.font = `600 10px ${MONO}`;
         ctx.textAlign = "center";
         ctx.textBaseline = "alphabetic";
-        ctx.fillStyle = "rgba(2,6,23,0.72)";
+        // Macchiato Crust rgba(24, 24, 37, 0.72)
+        ctx.fillStyle = "rgba(24,24,37,0.72)";
         for (const pose of bySlot) {
             if (!pose || pose.h < 18) continue;
             ctx.fillText(String(Math.round(pose.bar.value)), pose.x + barW / 2, base - pose.lift - 6);
         }
     }
 
-    // --- Línea del pivote (Quick Sort) ---
     const pivotAlpha = sample(scene.pivot.alpha, now);
     const pivotBar = scene.pivot.id !== null ? scene.bars.get(scene.pivot.id) : undefined;
     if (pivotAlpha > 0.01 && pivotBar) {
@@ -281,7 +272,6 @@ export function renderScene({ ctx, width, height, scene, now }: RenderOptions): 
         ctx.restore();
     }
 
-    // --- Marcadores de comparación ---
     const step = scene.step;
     if (step?.kind === "compare") {
         const pop = easeOutBack(clamp01((now - scene.stepT0) / CARET_POP_MS));
@@ -307,7 +297,6 @@ export function renderScene({ ctx, width, height, scene, now }: RenderOptions): 
         }
     }
 
-    // --- Partículas ---
     if (scene.bursts.length > 0) {
         ctx.globalCompositeOperation = "lighter";
         for (const b of scene.bursts) {

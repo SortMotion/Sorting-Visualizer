@@ -7,30 +7,14 @@ import { advanceScene, clamp, createScene, syncScene, type Scene } from "./anima
 import MetricsOverlay, { type Lane } from "./MetricsOverlay";
 import { renderScene } from "./renderer";
 
-// ---------------------------------------------------------------------------
-// Reconstrucción del arreglo en un paso dado
-// ---------------------------------------------------------------------------
-// Los SortStep solo "narran" lo que pasó (Arquitectura.md §2): no traen el
-// arreglo completo. Para dibujar el paso `i` hay que aplicar los pasos 0..i
-// sobre los `values` originales. Para que avanzar, retroceder o saltar sea
-// barato incluso con Stooge Sort (cientos de miles de pasos), se guarda una
-// "foto" del estado cada CHECKPOINT_INTERVAL pasos y solo se reaplican los
-// pasos que faltan desde la foto más cercana.
-//
-// Además del valor, cada posición guarda la identidad (`ids`) del elemento que
-// la ocupa. Los swaps mueven la identidad junto con el valor; así la animación
-// sabe qué barra viajó a dónde y la puede desplazar en lugar de repintarla.
-
 const CHECKPOINT_INTERVAL = 256;
 
-// Duraciones de la animación entre pasos.
-const JUMP_MS = 650; // saltos grandes, datos nuevos o pasos nuevos
-const MANUAL_MS = 340; // avance/retroceso manual en pausa
-const MIN_STEP_MS = 70;
-const MAX_STEP_MS = 420;
+const JUMP_MS = 250;
+const MANUAL_MS = 240;
+const MIN_STEP_MS = 20;
+const MAX_STEP_MS = 220;
 
 function stepDuration(isPlaying: boolean, speed: number): number {
-    // Se deja ~15% del intervalo libre para que cada movimiento termine antes del siguiente paso.
     return isPlaying ? clamp((INTERVAL_MS / speed) * 0.85, MIN_STEP_MS, MAX_STEP_MS) : MANUAL_MS;
 }
 
@@ -62,9 +46,6 @@ function identity(n: number): Int32Array {
     return ids;
 }
 
-// Aplica un paso sobre el estado (muta `array`, `ids` y `sorted`).
-// Los índices fuera de rango se ignoran: puede pasar durante el render en que
-// `values` ya cambió pero BottomControls todavía no descarta los pasos viejos.
 function applyStep(array: number[], ids: Int32Array, sorted: Uint8Array, step: SortStep): void {
     const n = array.length;
 
@@ -88,11 +69,9 @@ function applyStep(array: number[], ids: Int32Array, sorted: Uint8Array, step: S
         case "done":
             sorted.fill(1);
             break;
-        // "compare", "pivot" y "merge-range" solo resaltan; no cambian el estado.
     }
 }
 
-// Checkpoint `c` = estado DESPUÉS de aplicar el paso `c * CHECKPOINT_INTERVAL`.
 function buildTimeline(values: number[], steps: SortStep[]): Timeline {
     const array = [...values];
     const ids = identity(values.length);
@@ -125,10 +104,7 @@ function getFrame(
         };
     }
 
-    // Arquitectura.md §4.1: si este carril ya terminó, se queda congelado en
-    // su último paso mientras el otro carril sigue avanzando.
     const index = Math.min(Math.max(stepIndex, 0), steps.length - 1);
-
     const checkpointIndex = Math.floor(index / CHECKPOINT_INTERVAL);
     const checkpoint = timeline.checkpoints[checkpointIndex];
     const array = checkpoint.array.slice();
@@ -141,10 +117,6 @@ function getFrame(
 
     return { array, ids, sorted, step: steps[index], index };
 }
-
-// ---------------------------------------------------------------------------
-// Componente
-// ---------------------------------------------------------------------------
 
 type CanvasSize = {
     width: number;
@@ -159,13 +131,9 @@ type PrevFrameInfo = {
 };
 
 export type SortCanvasProps = {
-    /** Pasos de este carril (`steps.primary` o `steps.secondary`). */
     steps: SortStep[];
-    /** Arreglo original sobre el que se generaron los pasos. */
     values: number[];
-    /** Algoritmo de este carril (nombre y complejidad para el overlay). */
     algorithm: SortAlgorithm | undefined;
-    /** Carril: define qué `executionTimes[lane]` lee MetricsOverlay. */
     lane?: Lane;
     className?: string;
 };
@@ -192,7 +160,6 @@ function SortCanvas({
     const isPlaying = usePlaybackStore((state) => state.isPlaying);
     const speed = usePlaybackStore((state) => state.speed);
 
-    // Se recalcula solo cuando llegan pasos nuevos o cambian los datos.
     const timeline = useMemo(() => buildTimeline(values, steps), [values, steps]);
 
     const frame = useMemo(
@@ -200,8 +167,6 @@ function SortCanvas({
         [timeline, values, steps, currentStepIndex]
     );
 
-    // Observa el tamaño del contenedor (el callback inicial de ResizeObserver
-    // da la primera medida, así que no hace falta medir a mano en el efecto).
     useEffect(() => {
         const container = containerRef.current;
         if (!container) return;
@@ -214,7 +179,7 @@ function SortCanvas({
             const height = Math.floor(entry.contentRect.height);
             const dpr = window.devicePixelRatio || 1;
 
-            setSize((prev) =>
+            setSize((prev: CanvasSize) =>
                 prev.width === width && prev.height === height && prev.dpr === dpr
                     ? prev
                     : { width, height, dpr }
@@ -225,7 +190,6 @@ function SortCanvas({
         return () => observer.disconnect();
     }, []);
 
-    // Loop de animación: solo corre mientras algo se mueve; `kick` lo despierta.
     useEffect(() => {
         let raf = 0;
 
@@ -241,7 +205,6 @@ function SortCanvas({
             const { width, height, dpr } = sizeRef.current;
             const ctx = canvas && width > 0 && height > 0 ? canvas.getContext("2d") : null;
             if (ctx) {
-                // El renderer trabaja en px CSS; la escala se encarga del resto.
                 ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
                 renderScene({ ctx, width, height, scene, now });
             }
@@ -261,8 +224,6 @@ function SortCanvas({
         };
     }, []);
 
-    // Resolución física = tamaño CSS × devicePixelRatio, para que las barras
-    // no se vean borrosas en pantallas HiDPI.
     useEffect(() => {
         sizeRef.current = size;
         const canvas = canvasRef.current;
@@ -276,7 +237,6 @@ function SortCanvas({
         kickRef.current();
     }, [size]);
 
-    // Cada frame nuevo fija los destinos de la animación.
     useEffect(() => {
         const scene = sceneRef.current;
         if (!scene) return;
@@ -302,7 +262,7 @@ function SortCanvas({
 
     return (
         <section
-            className={`relative flex min-h-64 w-full flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/60 ${className}`}
+            className={`relative flex min-h-64 w-full flex-col overflow-hidden rounded-2xl border border-[#24273a] bg-[#181825]/60 ${className}`}
         >
             <div ref={containerRef} className="relative min-h-0 flex-1">
                 <canvas

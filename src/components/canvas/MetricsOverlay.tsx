@@ -6,11 +6,8 @@ import { buildCumulativeCounts } from "../../utils/stepMetrics";
 export type Lane = "primary" | "secondary";
 
 type MetricsOverlayProps = {
-    /** Pasos del carril que dibuja el SortCanvas padre (los mismos que recibe por props). */
     steps: SortStep[];
-    /** Algoritmo del carril; de aquí sale el nombre y la complejidad teórica. */
     algorithm: SortAlgorithm | undefined;
-    /** Carril del que se lee el tiempo de ejecución en usePlaybackStore.executionTimes. */
     lane?: Lane;
     className?: string;
 };
@@ -21,8 +18,6 @@ function formatCount(n: number): string {
     return numberFormat.format(n);
 }
 
-// performance.now() puede venir redondeado por el navegador (precisión
-// reducida por seguridad), así que tiempos muy pequeños se muestran como cota.
 function formatTime(ms: number | null): string {
     if (ms === null) return "—";
     if (ms < 0.01) return "<0.01 ms";
@@ -39,12 +34,12 @@ type MetricProps = {
 function Metric({ label, value, highlight = false }: MetricProps) {
     return (
         <div className="flex items-baseline justify-between gap-3">
-            <dt className="text-[8px] uppercase tracking-[0.25em] text-slate-500">
+            <dt className="text-[8px] uppercase tracking-[0.25em] text-[#5b6078]">
                 {label}
             </dt>
             <dd
                 className={`font-mono text-[11px] tabular-nums ${
-                    highlight ? "text-cyan-300" : "text-slate-200"
+                    highlight ? "text-[#8bd5ca]" : "text-[#cad3f5]"
                 }`}
             >
                 {value}
@@ -62,15 +57,11 @@ function MetricsOverlay({
     const currentStepIndex = usePlaybackStore((state) => state.currentStepIndex);
     const executionTime = usePlaybackStore((state) => state.executionTimes[lane]);
 
-    // Solo se recalcula cuando cambia el arreglo de pasos (nuevo "Sort"),
-    // no en cada avance de currentStepIndex.
     const counts = useMemo(() => buildCumulativeCounts(steps), [steps]);
 
     const total = steps.length;
     const hasSteps = total > 0;
 
-    // Arquitectura.md §4.1: si este carril terminó antes que el otro,
-    // se queda "congelado" en su último paso mientras el otro sigue.
     const visibleIndex = hasSteps ? Math.min(currentStepIndex, total - 1) : -1;
     const isFinished = hasSteps && visibleIndex === total - 1;
 
@@ -78,8 +69,6 @@ function MetricsOverlay({
     const swaps = hasSteps ? counts.swaps[visibleIndex] : 0;
     const writes = hasSteps ? counts.writes[visibleIndex] : 0;
 
-    // Insertion/Merge mueven datos con "set" en lugar de "swap"; sin esta
-    // fila mostrarían 0 intercambios y parecería que no hicieron trabajo.
     const usesWrites = hasSteps && counts.writes[total - 1] > 0;
 
     const progress = hasSteps
@@ -90,11 +79,11 @@ function MetricsOverlay({
 
     let status: { label: string; dot: string; text: string };
     if (!hasSteps) {
-        status = { label: "Idle", dot: "bg-slate-600", text: "text-slate-500" };
+        status = { label: "Idle", dot: "bg-[#494d64]", text: "text-[#5b6078]" };
     } else if (isFinished) {
-        status = { label: "Done", dot: "bg-emerald-400", text: "text-emerald-400" };
+        status = { label: "Done", dot: "bg-[#a6da95]", text: "text-[#a6da95]" };
     } else {
-        status = { label: "Running", dot: "bg-cyan-400", text: "text-cyan-400" };
+        status = { label: "Running", dot: "bg-[#91d7e3]", text: "text-[#91d7e3]" };
     }
 
     const name = algorithm?.name ?? "No algorithm";
@@ -103,15 +92,14 @@ function MetricsOverlay({
     return (
         <aside
             aria-label={`Metrics for ${name}`}
-            className={`pointer-events-none absolute right-3 top-3 z-10 w-52 max-w-[calc(100%-1.5rem)] select-none overflow-hidden rounded-xl border border-slate-700/60 bg-slate-900/55 text-white shadow-[0_8px_32px_rgba(2,6,23,0.45)] backdrop-blur-md ${className}`}
+            className={`pointer-events-none absolute right-3 top-3 z-10 w-52 max-w-[calc(100%-1.5rem)] select-none overflow-hidden rounded-xl border border-[#363a4f]/60 bg-[#1e2030]/55 text-[#cad3f5] shadow-[0_8px_32px_rgba(24,24,37,0.45)] backdrop-blur-md ${className}`}
         >
-            {/* --- Encabezado: carril, nombre y estado --- */}
-            <div className="flex items-center justify-between gap-2 border-b border-slate-700/50 px-3 py-2">
+            <div className="flex items-center justify-between gap-2 border-b border-[#363a4f]/50 px-3 py-2">
                 <div className="flex min-w-0 items-center gap-2">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-cyan-400/30 bg-cyan-400/5 font-mono text-[9px] text-cyan-300">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-[#91d7e3]/30 bg-[#91d7e3]/5 font-mono text-[9px] text-[#8bd5ca]">
                         {laneTag}
                     </span>
-                    <p className="truncate text-[11px] font-semibold tracking-[0.08em] text-slate-100">
+                    <p className="truncate text-[11px] font-semibold tracking-[0.08em] text-[#cad3f5]">
                         {name}
                     </p>
                 </div>
@@ -124,7 +112,6 @@ function MetricsOverlay({
                 </span>
             </div>
 
-            {/* --- Métricas --- */}
             <dl className="space-y-1.5 px-3 py-2.5">
                 <Metric
                     label="Complexity"
@@ -151,11 +138,10 @@ function MetricsOverlay({
                 <Metric label="Time" value={formatTime(executionTime)} />
             </dl>
 
-            {/* --- Progreso de este carril --- */}
-            <div className="h-0.5 w-full bg-slate-800/80">
+            <div className="h-0.5 w-full bg-[#24273a]/80">
                 <div
                     className={`h-full transition-[width] duration-150 ease-linear motion-reduce:transition-none ${
-                        isFinished ? "bg-emerald-400" : "bg-cyan-400"
+                        isFinished ? "bg-[#a6da95]" : "bg-[#91d7e3]"
                     }`}
                     style={{ width: `${progress}%` }}
                 />

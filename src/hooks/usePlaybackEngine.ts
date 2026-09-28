@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { usePlaybackStore } from '../store/usePlaybackStore';
 
 // Exportado para que SortCanvas ajuste la duración de cada animación al ritmo de reproducción.
-export const INTERVAL_MS = 500;
+export const INTERVAL_MS = 150;
 
 export function usePlaybackEngine() {
   const isPlaying = usePlaybackStore((state) => state.isPlaying);
