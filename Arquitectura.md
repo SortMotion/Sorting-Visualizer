@@ -5,7 +5,7 @@
 ## 0. Resumen del proyecto
 
 - SPA (una sola página) que anima algoritmos de ordenamiento en un `<canvas>`.
-- Algoritmos v1: Bubble, Selection, Insertion, Exchange, Gnome, Merge, Quick Sort.
+- Algoritmos v1: Bubble, Selection, Insertion, Exchange, Gnome, Merge, Quick Sort y Stooge Sort.
 - Layout: barra superior (selector de algoritmo) → canvas central (animación) → barra inferior (cantidad de elementos, randomizar, ordenar, controles tipo video: play/pause/velocidad/retroceder).
 - Stack: Vite + React + TypeScript, Tailwind CSS, Zustand, desplegado en Vercel.
 
@@ -265,9 +265,9 @@ Para mostrar dos algoritmos animándose en paralelo sin duplicar lógica, se sep
 | 2 | Setup Vite + TS + Tailwind + Zustand | Andy | Todo lo demás |
 | 3 | `utils/randomArray.ts` | Adriel | Nada |
 | 4 | Bubble Sort | Diego | Nada |
-| 5 | Selection Sort | Omar | Nada |
-| 6 | Insertion Sort | Omar | Nada |
-| 7 | Exchange Sort | Omar | Nada |
+| 5 | Selection Sort | Adriel | Nada |
+| 6 | Insertion Sort | Adriel | Nada |
+| 7 | Exchange Sort | Diego | Nada |
 | 8 | Gnome Sort | Andy | Nada |
 | 9 | Merge Sort | Diego | Nada |
 | 10 | Quick Sort | Diego | Nada |
